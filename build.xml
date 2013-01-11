@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="ProjectName" default="build">
+    <!-- add custom tasks from current directory  -->
+    <!-- https://github.com/EvanK/phing-ext-gittasks -->
+    <taskdef name="gitdescribe"   classname="GitDescribeTask" />
+    <taskdef name="gitdiff"       classname="GitDiffTask" />
+    <taskdef name="gitlog"        classname="GitLogTask" />
+    <taskdef name="gitremoteshow" classname="GitRemoteShowTask" />
+    <taskdef name="gittag"        classname="GitTagTask" />
+
+    <property file="default.properties" />
+
+    <!-- assume our current directory IS the git repo to operate on -->
+    <property name="repo.dir" value="${repo}" />
+    <resolvepath propertyName="repo.dir.resolved" file="${repo.dir}" />
+
+    <!-- deletes all content inside temp directory -->
+    <target name="cleanup">
+        <echo msg="Trying to clean up temp dir" />
+        <delete includeemptydirs="true" quiet="true">
+            <fileset dir="${tmpdir}">
+                <include name="**/**"/>
+            </fileset>
+        </delete>
+        <mkdir dir="${tmpdir}" />
+    </target>
+
+    <!-- Creates a diff since last tagged and copies it to temp directory -->
+    <target name="creatediff">
+        <!-- Gets last tag name -->
+        <gitdescribe repository="${repo.dir.resolved}"
+                     tags="true"
+                     abbrev="0"
+                     outputProperty="lastTag" />
+
+        <echo message="last Tag name was: ${lastTag}" />
+
+        <!-- Gets hash of last Tag-->
+        <exec outputProperty="lastTagHash"
+              command="git rev-parse --verify ${lastTag}"
+              dir="${repo.dir.resolved}"/>
+
+        <echo message="Hash of most recent tag ${lastTagHash}" />
+
+        <!-- Gets hash of last Commit-->
+        <exec outputProperty="lastCommitHash"
+              command="git log --pretty=format:'%H' -n 1"
+              dir="${repo.dir.resolved}"/>
+
+        <echo message="Hash of most recent commit ${lastCommitHash}" />
+
+        <!-- Created diff -->
+        <exec outputProperty="diffCreated"
+              command="cp -pv --parents `git diff --name-only ${lastTagHash} ${lastCommitHash}` ${tmpdir}/ "
+              dir="${repo.dir.resolved}"/>
+
+        <echo message="Diff was created: ${diffCreated}" />
+    </target>
+
+
+    <!-- uploads diff in temp directory to remote site via SCP -->
+    <target name="scpupload">
+        <echo message="Uploading diff from ${tmpdir} to ${scpserver} in ${scpuploaddir}" />
+
+        <scp
+            host     = "${scpserver}"
+            port     = "${scpport}"
+            username = "${scpusername}"
+            password = "${scppassword}"
+            todir    = "${scpuploaddir}"
+            level    = "${scplevel}"
+            >
+            <fileset dir="${tmpdir}">
+                <include name="**"/>
+                <exclude name="**/*.properties" />
+                <exclude name="**/build.xml" />
+                <exclude name="**/app/Config/facebook.default.php" />
+            </fileset>
+        </scp>
+
+        <echo message="Uploading diff from ${tmpdir} to ${scpserver} in ${scpuploaddir}" />
+    </target>
+
+    <!-- uploads diff in temp directory to remote site via FTP -->
+    <target name="ftpupload">
+        <echo message="Uploading diff from ${tmpdir} to ${ftpserver} in ${ftpuploaddir}" />
+
+        <!-- uploading via ftp -->
+        <ftpdeploy
+            host     = "${ftpserver}"
+            port     = "${ftpport}"
+            username = "${ftpusername}"
+            password = "${ftppassword}"
+            dir      = "${ftpuploaddir}"
+            level    = "${ftperrlevel}"
+            >
+            <fileset dir="${tmpdir}">
+                <include name="**"/>
+                <exclude name="**/*.properties" />
+                <exclude name="**/build.xml" />
+                <exclude name="**/app/Config/facebook.default.php" />
+            </fileset>
+        </ftpdeploy>
+
+        <echo message="Successfully uploaded diff from ${tmpdir} to ${ftpserver} in ${ftpuploaddir}" />
+    </target>
+
+    <!-- creates new svn tags -->
+    <target name="createtag">
+        <!-- Gets last tag name -->
+        <gitdescribe repository="${repo.dir.resolved}"
+                     tags="true"
+                     abbrev="0"
+                     outputProperty="lastTag" />
+
+        <!-- asks user to add new tag name -->
+        <!-- TODO: make it mandatory, or exit -->
+        <propertyprompt
+            propertyName = "newTag"
+            promptText   = "last Tag name was: ${lastTag} Please name new tag: "
+        />
+
+        <echo message="Creating a new tag: ${newTag}" />
+        <gittag repository="${repo.dir.resolved}"
+                annotate="true"
+                message="Creating new tag ${newTag}"
+                name="${newTag}" />
+
+    </target>
+
+    <!-- default target - displays list of all targets -->
+    <target name="build">
+        <echo message="Use following commands in sequence:" />
+        <echo message="1. phing creatediff" />
+        <echo message="2. phing ftpupload OR phing scpupload" />
+        <echo message="3. phing createtag" />
+    </target>
+
+</project>

@@ -1,0 +1,17 @@
+tmpdir=
+username=
+repo=
+uploaddir=
+password=
+ftpserver=
+ftpport=
+ftpusername=
+ftppassword=
+ftpuploaddir=
+ftperrlevel=
+scpserver=
+scpport=
+scpusername=
+scppassword=
+scpuploaddir=
+scplevel=
