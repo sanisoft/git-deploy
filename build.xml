@@ -18,12 +18,12 @@
     <!-- deletes all content inside temp directory -->
     <target name="cleanup">
         <echo msg="Trying to clean up temp dir" />
-        <delete includeemptydirs="true" quiet="true">
+        <!-- <delete includeemptydirs="true" quiet="true">
             <fileset dir="${tmpdir}">
                 <include name="**/**"/>
             </fileset>
         </delete>
-        <mkdir dir="${tmpdir}" />
+        <mkdir dir="${tmpdir}" /> -->
     </target>
 
     <!-- Creates a diff since last tagged and copies it to temp directory -->
@@ -50,12 +50,27 @@
 
         <echo message="Hash of most recent commit ${lastCommitHash}" />
 
-        <!-- Created diff -->
-        <exec outputProperty="diffCreated"
-              command="cp -pv --parents `git diff --name-only ${lastTagHash} ${lastCommitHash}` ${tmpdir}/ "
+        <!-- TODO: check if diff has something to be copied -->
+        <exec outputProperty="filesHaveChanged"
+              command="git diff --name-only ${lastTagHash} ${lastCommitHash}"
               dir="${repo.dir.resolved}"/>
 
-        <echo message="Diff was created: ${diffCreated}" />
+        <if>
+            <equals arg1="${filesHaveChanged}" arg2="" />
+            <then>
+                <echo message="There is no diff to be created" />
+            </then>
+            <else>
+                <!-- Created diff -->
+                <exec outputProperty="diffCreated"
+                      command="cp -pv --parents `git diff --name-only ${lastTagHash} ${lastCommitHash}` ${tmpdir}/ "
+                      dir="${repo.dir.resolved}"/>
+
+                <echo message="Diff was created: ${diffCreated}" />
+            </else>
+        </if>
+
+
     </target>
 
 
