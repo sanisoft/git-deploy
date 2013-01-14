@@ -4,9 +4,6 @@
     <!-- add custom tasks from current directory  -->
     <!-- https://github.com/EvanK/phing-ext-gittasks -->
     <taskdef name="gitdescribe"   classname="GitDescribeTask" />
-    <taskdef name="gitdiff"       classname="GitDiffTask" />
-    <taskdef name="gitlog"        classname="GitLogTask" />
-    <taskdef name="gitremoteshow" classname="GitRemoteShowTask" />
     <taskdef name="gittag"        classname="GitTagTask" />
 
     <property file="default.properties" />
@@ -18,16 +15,26 @@
     <!-- deletes all content inside temp directory -->
     <target name="cleanup">
         <echo msg="Trying to clean up temp dir" />
-        <!-- <delete includeemptydirs="true" quiet="true">
+        <delete includeemptydirs="true" quiet="true">
             <fileset dir="${tmpdir}">
                 <include name="**/**"/>
             </fileset>
         </delete>
-        <mkdir dir="${tmpdir}" /> -->
+        <mkdir dir="${tmpdir}" />
     </target>
 
     <!-- Creates a diff since last tagged and copies it to temp directory -->
-    <target name="creatediff">
+    <target name="creatediff" depends="cleanup">
+        <exec outputProperty="tagsExist"
+              command="git describe --abbrev=0 --tags"
+              dir="${repo.dir.resolved}" />
+        <if>
+            <equals arg1="${tagsExist}" arg2="fatal: No names found, cannot describe anything." />
+            <then>
+                <fail message="No tags were found. At least one tag is needed for creating diff." />
+            </then>
+        </if>
+
         <!-- Gets last tag name -->
         <gitdescribe repository="${repo.dir.resolved}"
                      tags="true"
@@ -69,8 +76,6 @@
                 <echo message="Diff was created: ${diffCreated}" />
             </else>
         </if>
-
-
     </target>
 
 
@@ -90,7 +95,6 @@
                 <include name="**"/>
                 <exclude name="**/*.properties" />
                 <exclude name="**/build.xml" />
-                <exclude name="**/app/Config/facebook.default.php" />
             </fileset>
         </scp>
 
@@ -123,24 +127,45 @@
 
     <!-- creates new svn tags -->
     <target name="createtag">
-        <!-- Gets last tag name -->
-        <gitdescribe repository="${repo.dir.resolved}"
-                     tags="true"
-                     abbrev="0"
-                     outputProperty="lastTag" />
+        <exec outputProperty="tagsExist"
+              command="git describe --abbrev=0 --tags"
+              dir="${repo.dir.resolved}" />
 
-        <!-- asks user to add new tag name -->
-        <!-- TODO: make it mandatory, or exit -->
-        <propertyprompt
-            propertyName = "newTag"
-            promptText   = "last Tag name was: ${lastTag} Please name new tag: "
-        />
+        <if>
+            <equals arg1="${tagsExist}" arg2="fatal: No names found, cannot describe anything." />
+            <then>
+                <!-- asks user to add new tag name -->
+                <propertyprompt propertyName = "newTag"
+                                promptText   = "Please name new tag: "/>
+            </then>
+            <else>
+                <!-- Gets last tag name -->
+                <gitdescribe repository="${repo.dir.resolved}"
+                             tags="true"
+                             abbrev="0"
+                             outputProperty="lastTag" />
 
-        <echo message="Creating a new tag: ${newTag}" />
-        <gittag repository="${repo.dir.resolved}"
-                annotate="true"
-                message="Creating new tag ${newTag}"
-                name="${newTag}" />
+                <!-- asks user to add new tag name -->
+                <propertyprompt propertyName = "newTag"
+                                promptText   = "last Tag name was: ${lastTag} Please name new tag: " />
+            </else>
+        </if>
+
+        <!-- If tag name was empty, exits with error message -->
+        <if>
+            <equals arg1="${newTag}" arg2="" />
+            <then>
+                <echo message="New tag name was empty, exiting without creating a new tag." />
+            </then>
+            <else>
+                <echo message="Creating a new tag: ${newTag}" />
+                <gittag repository="${repo.dir.resolved}"
+                        annotate="true"
+                        message="Creating new tag ${newTag}"
+                        name="${newTag}" />
+            </else>
+        </if>
+
 
     </target>
 
