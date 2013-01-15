@@ -2,6 +2,15 @@ repo=
 tmpdir=
 uploadfromdir=
 
+upload.dir.to=
+upload.dir.current=
+upload.dir.backup=
+
+ssh.username=
+ssh.password=
+ssh.host=
+ssh.basepath=
+
 ftpserver=
 ftpport=
 ftpusername=
