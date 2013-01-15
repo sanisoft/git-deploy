@@ -91,7 +91,7 @@
             todir    = "${scpuploaddir}"
             level    = "${scplevel}"
             >
-            <fileset dir="${tmpdir}">
+            <fileset dir="${uploadfromdir}">
                 <include name="**"/>
                 <exclude name="**/*.properties" />
                 <exclude name="**/build.xml" />
@@ -114,7 +114,7 @@
             dir      = "${ftpuploaddir}"
             level    = "${ftperrlevel}"
             >
-            <fileset dir="${tmpdir}">
+            <fileset dir="${uploadfromdir}">
                 <include name="**"/>
                 <exclude name="**/*.properties" />
                 <exclude name="**/build.xml" />
