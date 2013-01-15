@@ -98,7 +98,7 @@
             </fileset>
         </scp>
 
-        <echo message="Uploading diff from ${tmpdir} to ${scpserver} in ${scpuploaddir}" />
+        <echo message="Uploading diff from ${uploadfromdir} to ${scpserver} in ${scpuploaddir}" />
     </target>
 
     <!-- uploads diff in temp directory to remote site via FTP -->
@@ -122,7 +122,7 @@
             </fileset>
         </ftpdeploy>
 
-        <echo message="Successfully uploaded diff from ${tmpdir} to ${ftpserver} in ${ftpuploaddir}" />
+        <echo message="Successfully uploaded diff from ${uploadfromdir} to ${ftpserver} in ${ftpuploaddir}" />
     </target>
 
     <!-- creates new svn tags -->
