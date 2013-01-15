@@ -113,12 +113,12 @@
             password = "${ftppassword}"
             dir      = "${ftpuploaddir}"
             level    = "${ftperrlevel}"
+            passive  = "true"
             >
             <fileset dir="${uploadfromdir}">
                 <include name="**"/>
                 <exclude name="**/*.properties" />
                 <exclude name="**/build.xml" />
-                <exclude name="**/app/Config/facebook.default.php" />
             </fileset>
         </ftpdeploy>
 
