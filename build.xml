@@ -221,14 +221,14 @@
 
     <!-- In case of safe upload, activates uploaded changes -->
     <target name="safeupgrade">
-        <!-- delete main folder -->
+        <!-- rename main folder as delete folder -->
         <ssh username="${ssh.username}"
              password="${ssh.password}"
              host="${ssh.host}"
              display="true"
-             command="rm -rfv ${ssh.basepath}/${upload.dir.to}" />
+             command="mv -v ${ssh.basepath}/${upload.dir.to} ${ssh.basepath}/${upload.dir.delete}" />
 
-        <!-- rename current folder to main folder -->
+        <!-- rename current folder as main folder -->
         <ssh username="${ssh.username}"
              password="${ssh.password}"
              host="${ssh.host}"
@@ -251,9 +251,36 @@
              password="${ssh.password}"
              host="${ssh.host}"
              display="true"
-             command="mv -v ${ssh.basepath}/${upload.dir.backup} ${ssh.basepath}/${upload.dir.to}" />
+             command="mv -v ${ssh.basepath}/${upload.dir.delete} ${ssh.basepath}/${upload.dir.to}" />
 
     </target>
+
+
+    <!-- In case of safe upload, rollbacks uploaded changes -->
+    <target name="saferemovebackups">
+        <!-- removing current folder -->
+        <ssh username="${ssh.username}"
+             password="${ssh.password}"
+             host="${ssh.host}"
+             display="true"
+             command="rm -rfv ${ssh.basepath}/${upload.dir.current}" />
+
+        <!-- removin delete folder -->
+        <ssh username="${ssh.username}"
+             password="${ssh.password}"
+             host="${ssh.host}"
+             display="true"
+             command="rm -rfv ${ssh.basepath}/${upload.dir.delete}" />
+
+        <!-- removing backup folder -->
+        <ssh username="${ssh.username}"
+             password="${ssh.password}"
+             host="${ssh.host}"
+             display="true"
+             command="rm -rfv ${ssh.basepath}/${upload.dir.backup}" />
+
+    </target>
+
 
     <!-- creates new svn tags -->
     <target name="createtag">
@@ -302,9 +329,18 @@
     <!-- default target - displays list of all targets -->
     <target name="build">
         <echo message="Use following commands in sequence:" />
+        <echo message="-------- Normal Uploading--------" />
         <echo message="1. phing creatediff" />
         <echo message="2. phing ftpupload OR phing scpupload" />
         <echo message="3. phing createtag" />
+        <echo message="-------- SAFE Uploading--------" />
+        <echo message="Use following commands in sequence for Safe uploading:" />
+        <echo message="1. phing creatediff" />
+        <echo message="2. phing safeftpupload OR phing safescpupload" />
+        <echo message="3. phing safeupgrade" />
+        <echo message="4. phing safedowngrade (for rollbacking changes if something goes wrong)" />
+        <echo message="5. phing saferemovebackups (will remove all temporary/backup folders on server)" />
+        <echo message="6. phing createtag" />
     </target>
 
 </project>

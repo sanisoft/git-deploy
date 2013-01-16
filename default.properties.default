@@ -4,6 +4,7 @@ uploadfromdir=
 
 upload.dir.to=
 upload.dir.current=
+upload.dir.delete=
 upload.dir.backup=
 
 ssh.username=
